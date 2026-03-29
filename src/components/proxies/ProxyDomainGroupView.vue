@@ -1,6 +1,8 @@
 <template>
   <div class="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
-    <div class="border-base-300/60 bg-base-100 flex min-h-0 flex-1 flex-col overflow-hidden rounded-box border p-3 md:p-4">
+    <div
+      class="border-base-300/60 bg-base-100 rounded-box flex min-h-0 flex-1 flex-col overflow-hidden border p-3 md:p-4"
+    >
       <div class="relative z-30 shrink-0 pb-3">
         <div class="flex min-w-0 flex-col gap-2 md:flex-row md:items-center md:gap-3">
           <div class="flex min-w-0 items-center gap-2 md:contents">
@@ -24,7 +26,9 @@
                 <span class="truncate">{{ selectedGroupItem?.label }}</span>
               </summary>
 
-              <ul class="dropdown-content bg-base-100 rounded-box border-base-300/60 z-[60] mt-2 flex max-h-[min(24rem,calc(100vh-12rem))] min-w-56 flex-col overflow-y-auto overflow-x-hidden overscroll-contain border p-2 shadow-lg backdrop-blur-none [scrollbar-gutter:stable]">
+              <ul
+                class="proxy-domain-group-dropdown dropdown-content rounded-box border-base-300/60 z-[60] mt-2 flex max-h-[min(24rem,calc(100vh-12rem))] min-w-56 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border p-2 shadow-lg backdrop-blur-none [scrollbar-gutter:stable]"
+              >
                 <li
                   v-for="group in domainGroupItems"
                   :key="group.key"
@@ -79,10 +83,10 @@
                 class="domain-penetration-mode-btn shrink-0 rounded-md px-3 py-1 text-sm leading-5 font-medium whitespace-nowrap transition-colors md:px-4 md:py-1.5"
                 :class="[
                   selectedFamily === tab.value && !tab.disabled
-                    ? 'bg-base-100 text-base-content shadow-sm cursor-pointer'
+                    ? 'bg-base-100 text-base-content cursor-pointer shadow-sm'
                     : 'text-base-content/60 hover:text-base-content cursor-pointer',
                   tab.disabled &&
-                    'text-base-content/30 opacity-55 cursor-default pointer-events-none hover:text-base-content/30',
+                    'text-base-content/30 hover:text-base-content/30 pointer-events-none cursor-default opacity-55',
                 ]"
                 :aria-disabled="tab.disabled"
                 @click="!tab.disabled && (selectedFamily = tab.value)"
@@ -95,7 +99,7 @@
       </div>
 
       <div
-        class="border-base-300/60 bg-base-100 flex min-h-0 flex-1 flex-col overflow-hidden rounded-box border backdrop-blur-none"
+        class="border-base-300/60 bg-base-100 rounded-box flex min-h-0 flex-1 flex-col overflow-hidden border backdrop-blur-none"
       >
         <div
           v-if="cacheHintText"
@@ -125,13 +129,15 @@
             </div>
           </template>
           <template v-else>
-            <table class="domain-penetration-table table table-sm table-pin-rows table-auto w-max min-w-full rounded-none select-text">
+            <table
+              class="domain-penetration-table table-sm table-pin-rows table w-max min-w-full table-auto rounded-none select-text"
+            >
               <thead class="bg-base-100 sticky top-0 z-10">
                 <tr>
                   <th
                     v-for="column in columns"
                     :key="column.key"
-                    class="select-none whitespace-nowrap"
+                    class="whitespace-nowrap select-none"
                     :class="column.width"
                   >
                     <button
@@ -159,16 +165,20 @@
                   :key="`${item.type}-${item.content}-${item.params}-${item.raw}-${index}`"
                   :class="[index % 2 === 0 ? 'bg-base-100' : 'bg-base-200', 'select-text']"
                 >
-                  <td class="align-top text-sm font-medium whitespace-nowrap select-text cursor-text">
+                  <td
+                    class="cursor-text align-top text-sm font-medium whitespace-nowrap select-text"
+                  >
                     {{ getTypeLabel(item.type) }}
                   </td>
-                  <td class="align-top text-sm whitespace-nowrap select-text cursor-text">
+                  <td class="cursor-text align-top text-sm whitespace-nowrap select-text">
                     {{ item.content || '-' }}
                   </td>
-                  <td class="align-top text-sm whitespace-nowrap select-text cursor-text">
+                  <td class="cursor-text align-top text-sm whitespace-nowrap select-text">
                     {{ item.params || '-' }}
                   </td>
-                  <td class="text-base-content/75 align-top whitespace-nowrap font-mono text-xs md:text-sm select-text cursor-text">
+                  <td
+                    class="text-base-content/75 cursor-text align-top font-mono text-xs whitespace-nowrap select-text md:text-sm"
+                  >
                     {{ item.raw }}
                   </td>
                 </tr>
@@ -205,16 +215,16 @@ import {
 } from '@/helper/proxyDomainGroups'
 import { fetchServerApi } from '@/store/auth'
 import { proxyMap } from '@/store/proxies'
-import { fetchRules, rules } from '@/store/rules'
-import { ArrowDownCircleIcon, ArrowUpCircleIcon, QueueListIcon } from '@heroicons/vue/24/outline'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import type {
   ProxyGroupRulePenetrationEntry,
   ProxyGroupRulePenetrationFamily,
   ProxyGroupRulePenetrationSortKey,
 } from '@/store/proxyGroupRulePenetration'
+import { fetchRules, rules } from '@/store/rules'
 import type { Rule } from '@/types'
+import { ArrowDownCircleIcon, ArrowUpCircleIcon, QueueListIcon } from '@heroicons/vue/24/outline'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ProxyIcon from './ProxyIcon.vue'
 
 type GroupTabValue = Exclude<ProxyGroupRulePenetrationFamily, 'other'>
@@ -343,7 +353,7 @@ const domainGroupItems = computed(() => {
     return {
       key: name,
       label,
-      icon: isDomainGroupCustomKey(name) ? '' : (proxy?.icon || ''),
+      icon: isDomainGroupCustomKey(name) ? '' : proxy?.icon || '',
     }
   })
 })
@@ -646,19 +656,16 @@ watch(
   { immediate: true },
 )
 
-watch(
-  selectedGroupName,
-  (groupName, previousGroupName) => {
-    if (groupName === previousGroupName) {
-      return
-    }
+watch(selectedGroupName, (groupName, previousGroupName) => {
+  if (groupName === previousGroupName) {
+    return
+  }
 
-    if (isDomainGroupCustomKey(groupName)) {
-      resetSortState()
-      selectedProvider.value = ''
-    }
-  },
-)
+  if (isDomainGroupCustomKey(groupName)) {
+    resetSortState()
+    selectedProvider.value = ''
+  }
+})
 
 watch(
   providerOptions,

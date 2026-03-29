@@ -139,6 +139,12 @@ html.apple-mobile-ui {
   border-radius: var(--app-radius-compact, 0.4rem) !important;
 }
 
+#app-content .proxy-domain-group-dropdown {
+  background-color: var(--color-base-100) !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
 #app-content .join > .join-item {
   border-radius: 0 !important;
 }

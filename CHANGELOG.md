@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.73](https://github.com/liandu2024/AnGe-ClashBoard/compare/v1.72...v1.73) (2026-03-29)
+
+### Features
+
+* split the connections table into a fixed header and a separately scrollable body so the column header stays visible while browsing long connection lists
+
+### Bug Fixes
+
+* remove the transparent background effect from the proxy domain-group dropdown so menu items remain readable over custom page backgrounds
+
 ## [1.72](https://github.com/liandu2024/AnGe-ClashBoard/compare/v1.71...v1.72) (2026-03-29)
 
 ### Features

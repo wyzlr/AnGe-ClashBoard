@@ -1,14 +1,101 @@
 <template>
   <div class="app-card-padding flex min-h-0 flex-1">
     <div
-      class="connection-table-shell border-base-300/60 bg-base-100 flex min-h-0 flex-1 overflow-hidden rounded-lg border"
+      class="connection-table-shell border-base-300/60 bg-base-100 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border"
     >
+      <div class="connection-table-header border-base-300/60 bg-base-100 overflow-hidden border-b">
+        <table
+          :class="sharedTableClass"
+          :style="headerTableStyle"
+        >
+          <thead class="bg-base-100 z-20">
+            <tr
+              v-for="headerGroup in tanstackTable.getHeaderGroups()"
+              :key="headerGroup.id"
+            >
+              <th
+                v-for="header in headerGroup.headers"
+                :key="header.id"
+                :colSpan="header.colSpan"
+                class="bg-base-100 relative"
+                :class="[
+                  header.column.getCanSort() ? 'cursor-pointer select-none' : '',
+                  header.column.getIsPinned && header.column.getIsPinned() === 'left'
+                    ? 'pinned-td sticky left-0 z-30'
+                    : 'z-20',
+                ]"
+                :style="getColumnStyle(header.getSize())"
+                @click="header.column.getToggleSortingHandler()?.($event)"
+              >
+                <div class="flex items-center gap-1">
+                  <FlexRender
+                    v-if="!header.isPlaceholder"
+                    :render="header.column.columnDef.header"
+                    :props="header.getContext()"
+                  >
+                  </FlexRender>
+                  <ArrowUpCircleIcon
+                    class="h-4 w-4"
+                    v-if="header.column.getIsSorted() === 'asc'"
+                  />
+                  <ArrowDownCircleIcon
+                    class="h-4 w-4"
+                    v-if="header.column.getIsSorted() === 'desc'"
+                  />
+                  <div>
+                    <button
+                      v-if="header.column.getCanGroup()"
+                      class="btn btn-xs btn-circle btn-ghost"
+                      @click.stop="() => header.column.getToggleGroupingHandler()()"
+                    >
+                      <MagnifyingGlassMinusIcon
+                        v-if="header.column.getIsGrouped()"
+                        class="h-4 w-4"
+                      />
+                      <MagnifyingGlassPlusIcon
+                        v-else
+                        class="h-4 w-4"
+                      />
+                    </button>
+                    <button
+                      v-if="
+                        header.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.Host ||
+                        header.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.SniffHost
+                      "
+                      class="btn btn-xs btn-circle btn-ghost"
+                      @click.stop="() => handlePinColumn(header.column)"
+                    >
+                      <MapPinIcon
+                        v-if="header.column.getIsPinned() !== 'left'"
+                        class="h-4 w-4"
+                      />
+                      <XMarkIcon
+                        v-else
+                        class="h-4 w-4"
+                      />
+                    </button>
+                  </div>
+                </div>
+                <div
+                  v-if="isManualTable"
+                  @dblclick="() => header.column.resetSize()"
+                  @click.stop
+                  @mousedown.stop="(e) => header.getResizeHandler()(e)"
+                  @touchstart.stop="(e) => header.getResizeHandler()(e)"
+                  class="resizer bg-neutral absolute top-0 right-0 h-full w-1 cursor-ew-resize"
+                />
+              </th>
+            </tr>
+          </thead>
+        </table>
+      </div>
       <div
         ref="parentRef"
         class="connection-table-scroll min-h-0 flex-1 overflow-auto overscroll-contain"
         :class="{
           'select-none': isDragging,
         }"
+        @scroll.passive="handleTableScroll"
         @touchstart.passive.stop
         @touchmove.passive.stop
         @touchend.passive.stop
@@ -19,96 +106,9 @@
       >
         <div :style="{ height: `${totalSize}px` }">
           <table
-            :class="['table rounded-none', sizeOfTable, isManualTable && 'table-fixed']"
-            :style="
-              isManualTable && {
-                width: `${tanstackTable.getCenterTotalSize()}px`,
-              }
-            "
+            :class="sharedTableClass"
+            :style="bodyTableStyle"
           >
-            <thead class="bg-base-100 sticky top-0 z-10">
-              <tr
-                v-for="headerGroup in tanstackTable.getHeaderGroups()"
-                :key="headerGroup.id"
-              >
-                <th
-                  v-for="header in headerGroup.headers"
-                  :key="header.id"
-                  :colSpan="header.colSpan"
-                  class="relative"
-                  :class="[
-                    header.column.getCanSort() ? 'cursor-pointer select-none' : '',
-                    header.column.getIsPinned && header.column.getIsPinned() === 'left'
-                      ? 'pinned-td bg-base-100 sticky left-0 z-20'
-                      : '',
-                  ]"
-                  :style="
-                    isManualTable && {
-                      width: `${header.getSize()}px`,
-                    }
-                  "
-                  @click="header.column.getToggleSortingHandler()?.($event)"
-                >
-                  <div class="flex items-center gap-1">
-                    <FlexRender
-                      v-if="!header.isPlaceholder"
-                      :render="header.column.columnDef.header"
-                      :props="header.getContext()"
-                    >
-                    </FlexRender>
-                    <ArrowUpCircleIcon
-                      class="h-4 w-4"
-                      v-if="header.column.getIsSorted() === 'asc'"
-                    />
-                    <ArrowDownCircleIcon
-                      class="h-4 w-4"
-                      v-if="header.column.getIsSorted() === 'desc'"
-                    />
-                    <div>
-                      <button
-                        v-if="header.column.getCanGroup()"
-                        class="btn btn-xs btn-circle btn-ghost"
-                        @click.stop="() => header.column.getToggleGroupingHandler()()"
-                      >
-                        <MagnifyingGlassMinusIcon
-                          v-if="header.column.getIsGrouped()"
-                          class="h-4 w-4"
-                        />
-                        <MagnifyingGlassPlusIcon
-                          v-else
-                          class="h-4 w-4"
-                        />
-                      </button>
-                      <button
-                        v-if="
-                          header.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.Host ||
-                          header.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.SniffHost
-                        "
-                        class="btn btn-xs btn-circle btn-ghost"
-                        @click.stop="() => handlePinColumn(header.column)"
-                      >
-                        <MapPinIcon
-                          v-if="header.column.getIsPinned() !== 'left'"
-                          class="h-4 w-4"
-                        />
-                        <XMarkIcon
-                          v-else
-                          class="h-4 w-4"
-                        />
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    v-if="isManualTable"
-                    @dblclick="() => header.column.resetSize()"
-                    @click.stop
-                    @mousedown.stop="(e) => header.getResizeHandler()(e)"
-                    @touchstart.stop="(e) => header.getResizeHandler()(e)"
-                    class="resizer bg-neutral absolute top-0 right-0 h-full w-1 cursor-ew-resize"
-                  />
-                </th>
-              </tr>
-            </thead>
             <tbody>
               <tr
                 v-for="(virtualRow, index) in virtualRows"
@@ -152,6 +152,7 @@
                       ? 'pinned-td sticky left-0 z-20 bg-inherit'
                       : '',
                   ]"
+                  :style="getColumnStyle(cell.column.getSize())"
                   @contextmenu="handleCellRightClick($event, cell)"
                 >
                   <template v-if="cell.column.getIsGrouped()">
@@ -252,7 +253,7 @@ import {
   type SortingState,
 } from '@tanstack/vue-table'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { useStorage } from '@vueuse/core'
+import { useElementSize, useStorage } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { twMerge } from 'tailwind-merge'
 import { computed, h, ref, type VNode } from 'vue'
@@ -577,6 +578,8 @@ const rows = computed(() => {
 })
 
 const parentRef = ref<HTMLElement | null>(null)
+const { width: scrollViewportWidth } = useElementSize(parentRef)
+const scrollLeft = ref(0)
 const rowVirtualizerOptions = computed(() => {
   return {
     count: rows.value.length,
@@ -589,6 +592,30 @@ const rowVirtualizerOptions = computed(() => {
 const rowVirtualizer = useVirtualizer(rowVirtualizerOptions)
 const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize() + 24)
+const sharedTableClass = computed(() => {
+  return ['table table-fixed rounded-none', sizeOfTable.value]
+})
+const resolvedTableWidth = computed(() => {
+  return Math.max(scrollViewportWidth.value || 0, tanstackTable.getCenterTotalSize())
+})
+const headerTableStyle = computed(() => {
+  return {
+    width: `${resolvedTableWidth.value}px`,
+    transform: `translateX(-${scrollLeft.value}px)`,
+  }
+})
+const bodyTableStyle = computed(() => {
+  return {
+    width: `${resolvedTableWidth.value}px`,
+  }
+})
+const getColumnStyle = (width: number) => {
+  return {
+    width: `${width}px`,
+    minWidth: `${width}px`,
+    maxWidth: `${width}px`,
+  }
+}
 
 const classMap = {
   [TABLE_SIZE.SMALL]: 'table-xs',
@@ -631,6 +658,10 @@ const handlePinColumn = (column: Column<Connection, unknown>) => {
 const isDragging = ref(false)
 const isMouseDown = ref(false)
 const DRAG_THRESHOLD = Math.pow(3, 2)
+
+const handleTableScroll = () => {
+  scrollLeft.value = parentRef.value?.scrollLeft || 0
+}
 
 const handleMouseDown = (e: MouseEvent) => {
   if (e.button !== 0) return // 只处理左键
