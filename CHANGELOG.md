@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.75](https://github.com/liandu2024/AnGe-ClashBoard/compare/v1.74...v1.75) (2026-03-29)
+
+### Bug Fixes
+
+* refine the mobile proxy provider toolbar by moving the refresh action onto the second row, letting the search field resize more naturally, and keeping the action icons right-aligned on subscription screens
+
 ## [1.74](https://github.com/liandu2024/AnGe-ClashBoard/compare/v1.73...v1.74) (2026-03-29)
 
 ### Features

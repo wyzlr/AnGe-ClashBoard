@@ -133,6 +133,9 @@ export default defineComponent({
     })
 
     return () => {
+      const isProviderTab = proxiesTabShow.value === PROXY_TAB_TYPE.PROVIDER
+      const moveRefreshToSecondRow = !isLargeCtrlsBar.value && isProviderTab
+
       const tabs = (
         <div
           role="tablist"
@@ -237,14 +240,20 @@ export default defineComponent({
 
       const searchInput = (
         <TextInput
-          class={['w-32 flex-1', isLargeCtrlsBar.value && 'max-w-80']}
+          class={[
+            isLargeCtrlsBar.value
+              ? 'w-32 max-w-80 flex-1'
+              : moveRefreshToSecondRow
+                ? 'w-full'
+                : 'w-32 flex-1',
+          ]}
           v-model={proxiesFilter.value}
           placeholder={`${t('search')} | ${t('searchMultiple')}`}
           clearable={true}
         />
       )
 
-      const searchSection = <div class="flex min-w-0 flex-1 items-center">{searchInput}</div>
+      const searchSection = <div class={['flex min-w-0 flex-1 items-center']}>{searchInput}</div>
 
       const domainSearchInput = (
         <TextInput
@@ -373,14 +382,17 @@ export default defineComponent({
         <div class="app-card-padding flex flex-col gap-2">
           <div class="flex gap-2">
             {tabs}
-            {upgradeAllIcon}
+            {!moveRefreshToSecondRow && upgradeAllIcon}
           </div>
           <div class="flex w-full gap-2">
             {modeSelect}
             {searchSection}
-            {settingsModal}
-            {toggleCollapseAll}
-            {latencyTestAll}
+            <div class="ml-auto flex shrink-0 items-center gap-2">
+              {moveRefreshToSecondRow && upgradeAllIcon}
+              {settingsModal}
+              {toggleCollapseAll}
+              {latencyTestAll}
+            </div>
           </div>
         </div>
       ) : (
