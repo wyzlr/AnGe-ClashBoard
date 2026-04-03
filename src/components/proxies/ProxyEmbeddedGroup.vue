@@ -172,12 +172,12 @@ import LatencyTag from './LatencyTag.vue'
 import ProxiesByProvider from './ProxiesByProvider.vue'
 import ProxiesContent from './ProxiesContent.vue'
 import ProxyGroupNow from './ProxyGroupNow.vue'
-import ProxyName from './ProxyName.vue'
 import ProxyIcon from './ProxyIcon.vue'
+import ProxyName from './ProxyName.vue'
 import ProxyPreview from './ProxyPreview.vue'
 
 const emit = defineEmits<{
-  'selection-change': [groupName: string]
+  'selection-change': [groupName: string, nodeName: string]
 }>()
 
 const props = withDefaults(
@@ -237,12 +237,12 @@ const handlerGroupToggle = () => {
   hiddenGroup.value = !hiddenGroup.value
 }
 
-const handleSelectionChange = () => {
-  emit('selection-change', props.name)
+const handleSelectionChange = (nodeName: string) => {
+  emit('selection-change', props.name, nodeName)
 }
 
 const handlePreviewSelect = (nodeName: string) => {
-  handleSelectionChange()
+  handleSelectionChange(nodeName)
   handlerProxySelect(props.name, nodeName)
 }
 

@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { getProxyGroupChains } from '@/store/proxies'
+import { getDescendantProxyGroups, getProxyGroupChains, proxyMap } from '@/store/proxies'
 import { collapseGroupMap } from '@/store/settings'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { useStorage } from '@vueuse/core'
@@ -97,12 +97,56 @@ const penetrationMode = computed<PenetrationMode>({
     penetrationModeMap.value[groupNameRoot] = value
   },
 })
-const routeGroupNames = computed(() => getProxyGroupChains(props.groupName))
-const penetratedGroupNames = computed(() => routeGroupNames.value.slice(1))
+const lastSelectedGroupName = ref('')
+const selectedPenetrationGroupMap = ref<Record<string, string>>({})
+const stepwiseVisibleCount = ref(1)
+
+const getActualNextGroupName = (groupName: string) => {
+  return getProxyGroupChains(groupName)[1] ?? ''
+}
+
+const getSelectedNextGroupName = (groupName: string) => {
+  const selectedName = selectedPenetrationGroupMap.value[groupName]
+
+  if (
+    selectedName &&
+    (proxyMap.value[groupName]?.all ?? []).includes(selectedName) &&
+    proxyMap.value[selectedName]?.all?.length
+  ) {
+    return selectedName
+  }
+
+  return ''
+}
+
+const buildPenetratedGroupNames = () => {
+  if (!props.groupName) {
+    return []
+  }
+
+  const groupNames: string[] = []
+  const visited = new Set<string>([groupNameRoot])
+  let currentGroupName = groupNameRoot
+
+  while (true) {
+    const nextGroupName =
+      getSelectedNextGroupName(currentGroupName) || getActualNextGroupName(currentGroupName)
+
+    if (!nextGroupName || visited.has(nextGroupName)) {
+      break
+    }
+
+    groupNames.push(nextGroupName)
+    visited.add(nextGroupName)
+    currentGroupName = nextGroupName
+  }
+
+  return groupNames
+}
+
+const penetratedGroupNames = computed(() => buildPenetratedGroupNames())
 const canPenetrate = computed(() => penetratedGroupNames.value.length > 0)
 const canSwitchMode = computed(() => penetratedGroupNames.value.length > 1)
-const lastSelectedGroupName = ref('')
-const stepwiseVisibleCount = ref(1)
 
 const renderedGroups = computed(() => {
   if (!canPenetrate.value) {
@@ -120,8 +164,38 @@ const buttonLabel = computed(() =>
   isExpanded.value ? t('collapsePenetration') : t('strategyPenetration'),
 )
 
-const handleSelectionChange = (groupName: string) => {
+const syncStepwiseVisibleCount = (groupNames: string[]) => {
+  const selectedIndex = lastSelectedGroupName.value
+    ? groupNames.indexOf(lastSelectedGroupName.value)
+    : -1
+
+  stepwiseVisibleCount.value =
+    selectedIndex === -1 ? 1 : Math.min(groupNames.length, selectedIndex + 2)
+}
+
+const handleSelectionChange = (groupName: string, nodeName: string) => {
   lastSelectedGroupName.value = groupName
+
+  const nextSelectedPenetrationGroupMap = { ...selectedPenetrationGroupMap.value }
+
+  getDescendantProxyGroups(groupName).forEach((descendantGroupName) => {
+    delete nextSelectedPenetrationGroupMap[descendantGroupName]
+  })
+
+  if (
+    (proxyMap.value[groupName]?.all ?? []).includes(nodeName) &&
+    proxyMap.value[nodeName]?.all?.length
+  ) {
+    nextSelectedPenetrationGroupMap[groupName] = nodeName
+  } else {
+    delete nextSelectedPenetrationGroupMap[groupName]
+  }
+
+  selectedPenetrationGroupMap.value = nextSelectedPenetrationGroupMap
+
+  if (penetrationMode.value === 'stepwise') {
+    syncStepwiseVisibleCount(buildPenetratedGroupNames())
+  }
 }
 
 const resetStepwiseVisibleCount = () => {
@@ -138,6 +212,7 @@ watch(canPenetrate, (value) => {
   if (!value) {
     isExpanded.value = false
     lastSelectedGroupName.value = ''
+    selectedPenetrationGroupMap.value = {}
     resetStepwiseVisibleCount()
   }
 })
@@ -152,12 +227,7 @@ watch(
   penetratedGroupNames,
   (groupNames) => {
     if (penetrationMode.value === 'stepwise') {
-      const selectedIndex = lastSelectedGroupName.value
-        ? groupNames.indexOf(lastSelectedGroupName.value)
-        : -1
-
-      stepwiseVisibleCount.value =
-        selectedIndex === -1 ? 1 : Math.min(groupNames.length, selectedIndex + 2)
+      syncStepwiseVisibleCount(groupNames)
     }
 
     if (!isExpanded.value) {

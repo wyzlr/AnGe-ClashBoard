@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.85](https://github.com/liandu2024/AnGe-ClashBoard/compare/v1.84...v1.85) (2026-04-03)
+
+### Bug Fixes
+
+* let strategy penetration keep following the manually clicked child selector path in fallback chains so you can still drill into selector groups and switch to an available node even when the runtime route temporarily falls back to an auto url-test branch
+
 ## [1.84](https://github.com/liandu2024/AnGe-ClashBoard/compare/v1.83...v1.84) (2026-04-03)
 
 ### Bug Fixes
